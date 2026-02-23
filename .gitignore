@@ -6,6 +6,7 @@ Thumbs.db
 .ai/runtime/*.txt
 .ai/runtime/*.env
 .ai/runtime/smoke/
+.ai/runtime/orchestrator/
 
 .ai/ARCHIVE_LOCK
 .ai/PAUSE.md

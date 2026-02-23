@@ -16,6 +16,7 @@ $required = @(
   "$root/docs/memory-contract.md",
   "$root/docs/feature-template.md",
   "$root/scripts/validation/check-prompts.mjs",
+  "$root/scripts/orchestrator/rw-top-level-runner.mjs",
   "$root/scripts/archive/archive-progress.mjs"
 )
 
@@ -54,11 +55,11 @@ foreach ($token in $plannerRequired) {
 }
 
 $autoRequired = @(
-  "AUTO_RECOVERY_CONTEXT_BOOTSTRAP",
-  "AUTO_RECOVERY_STATE_BOOTSTRAP",
+  "AUTO_EXECUTION_MODE=ROUTE_ONLY",
+  "AUTO_ROUTE_REASON=<RECOVERY_CONTEXT|RECOVERY_STATE|FEATURE_SUMMARY|ACTIVE_TASKS|TASK_ROWS_REVIEW|READY_FEATURE|PLAN_ARTIFACTS_MISSING|NO_WORK|UNDECIDED_DEFAULT>",
   ".ai/runtime/rw-auto.lock",
   "AUTO_LOCK_HELD",
-  "exact-prefix extraction"
+  'Never call `runSubagent`.'
 )
 
 foreach ($token in $autoRequired) {
