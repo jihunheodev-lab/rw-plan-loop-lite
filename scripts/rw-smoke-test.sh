@@ -2,7 +2,7 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-echo "=== RW 2-Agent Lite Smoke Test ==="
+echo "=== RW Plan Loop Lite Smoke Test ==="
 echo "root=$ROOT"
 
 required_files=(

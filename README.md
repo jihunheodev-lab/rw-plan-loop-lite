@@ -1,6 +1,6 @@
-# RW 2-Agent Lite
+# RW Plan Loop Lite
 
-실사용 기준으로 최소 구성만 남긴 2-에이전트 오케스트레이션 템플릿입니다.
+실사용 기준으로 최소 구성만 남긴 plan/loop 오케스트레이션 템플릿입니다.
 
 - `rw-planner`: 하이브리드 인터뷰(askQuestions) + 요구사항 정리 + 태스크 분해
 - `rw-loop`: 구현 위임 + 검증 + 리뷰 게이트

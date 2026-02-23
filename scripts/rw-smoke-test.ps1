@@ -1,7 +1,7 @@
 $ErrorActionPreference = "Stop"
 
 $root = Split-Path -Parent $PSScriptRoot
-Write-Output "=== RW 2-Agent Lite Smoke Test (PowerShell) ==="
+Write-Output "=== RW Plan Loop Lite Smoke Test (PowerShell) ==="
 Write-Output "root=$root"
 
 $required = @(
