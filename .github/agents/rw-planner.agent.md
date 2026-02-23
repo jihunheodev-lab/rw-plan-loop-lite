@@ -3,7 +3,7 @@ name: rw-planner
 description: "Lite+Contract planner: hybrid askQuestions + subagent planning + DAG/task-graph generation with approval integrity"
 agent: agent
 argument-hint: "Feature request. Planner always asks mandatory need-gate questions, then deep-dive if ambiguous."
-tools: ['search', 'read', 'web', 'vscode/memory', 'github/issue_read', 'github.vscode-pull-request-github/issue_fetch', 'github.vscode-pull-request-github/activePullRequest', 'execute/getTerminalOutput', 'execute/testFailure', 'agent', 'vscode/askQuestions']
+tools: [vscode/memory, vscode/askQuestions, execute/testFailure, execute/getTerminalOutput, read/getNotebookSummary, read/problems, read/readFile, read/terminalSelection, read/terminalLastCommand, agent/askQuestions, agent/runSubagent, edit/createDirectory, edit/createFile, edit/createJupyterNotebook, edit/editFiles, edit/editNotebook, edit/rename, search/changes, search/codebase, search/fileSearch, search/listDirectory, search/searchResults, search/textSearch, search/usages, web/fetch, web/githubRepo]
 handoffs:
   - label: Start Implementation
     agent: rw-loop
