@@ -13,11 +13,13 @@ Quick summary:
 - Stop on `done`, policy guard, or controlled escalation.
 - Keep orchestration state deterministic via cycle limit.
 - Self-heal missing `.ai/CONTEXT.md` or `.ai/PROGRESS.md` by running `rw-planner`.
+- Run `.ai` health-check and auto-fix metadata drift before routing.
 - Prevent concurrent runs with runtime lock file.
 
 Contract token:
 - `AUTO_ROUTE_TARGET=<rw-planner|rw-loop|done>`
 - `AUTO_CYCLE=<n>`
+- `AUTO_INPUT_SUMMARY_OVERRIDES_TASKS`
 - `NEXT_COMMAND=<rw-planner|rw-loop|rw-auto|done>`
 
 Failure token:
@@ -25,6 +27,7 @@ Failure token:
 - `AUTO_MAX_CYCLES_REACHED`
 - `AUTO_SUBAGENT_RESULT_INVALID`
 - `AUTO_PLAN_ARTIFACTS_MISSING`
+- `AUTO_HEALTHCHECK_FAILED`
 - `FEATURE_REVIEW_REQUIRED`
   - with:
     - `FEATURE_REVIEW_REASON=<APPROVAL_MISSING|APPROVAL_RESET_SCOPE_CHANGED>`
@@ -33,19 +36,30 @@ Failure token:
 - `AUTO_LOCK_HELD`
 
 Step 0 (Mandatory):
-1) Probe `.ai/CONTEXT.md`.
-2) If `.ai/CONTEXT.md` is missing/unreadable:
+1) Run `.ai` health-check script:
+   - run: `node scripts/health/ai-health-check.mjs --mode check`
+   - if status is fail:
+     - run: `node scripts/health/ai-health-check.mjs --mode fix`
+     - rerun check once
+   - if final status is still fail:
+     - print `AUTO_HEALTHCHECK_FAILED`
+     - print `NEXT_COMMAND=rw-planner`
+     - stop
+   - if script is unavailable:
+     - continue with standard guards (best-effort mode)
+2) Probe `.ai/CONTEXT.md`.
+3) If `.ai/CONTEXT.md` is missing/unreadable:
    - set `NEEDS_CONTEXT_BOOTSTRAP=YES`
    - do not stop (auto-recover path)
-3) Probe `.ai/PROGRESS.md`.
-4) If `.ai/PROGRESS.md` is missing:
+4) Probe `.ai/PROGRESS.md`.
+5) If `.ai/PROGRESS.md` is missing:
    - set `NEEDS_STATE_BOOTSTRAP=YES`
    - do not stop (auto-recover path)
-5) If progress path exists but is unreadable/corrupted:
+6) If progress path exists but is unreadable/corrupted:
    - print `TARGET_ROOT_INVALID`
    - print `NEXT_COMMAND=rw-planner`
    - stop
-6) Acquire runtime lock:
+7) Acquire runtime lock:
    - lock path: `.ai/runtime/rw-auto.lock`
    - if lock exists and is recent (< 10 minutes):
      - print `AUTO_LOCK_HELD`
@@ -54,15 +68,15 @@ Step 0 (Mandatory):
    - if lock exists but stale:
      - replace it
    - write lock payload with timestamp
-7) Ensure `runSubagent` is available.
-8) If unavailable:
+8) Ensure `runSubagent` is available.
+9) If unavailable:
    - print `RW_ENV_UNSUPPORTED`
    - remove lock file
    - print `NEXT_COMMAND=rw-auto`
    - stop
-9) Do not implement planner/loop internals inline.
+10) Do not implement planner/loop internals inline.
    - This agent delegates only.
-10) Parse orchestration options from argument:
+11) Parse orchestration options from argument:
    - `--max-cycles=<n>` (default: 8, min: 1, max: 20)
    - HITL passthrough for loop: `--auto|--no-hitl|--hitl`
 
@@ -95,6 +109,9 @@ Orchestration loop:
      - else if `HAS_PROGRESS` is false:
        - print `AUTO_RECOVERY_STATE_BOOTSTRAP`
        - `AUTO_ROUTE_TARGET=rw-planner`
+     - else if `HAS_FEATURE_SUMMARY`:
+       - print `AUTO_INPUT_SUMMARY_OVERRIDES_TASKS`
+       - `AUTO_ROUTE_TARGET=rw-planner`
      - else if `HAS_ACTIVE_TASKS` and `PLAN_ARTIFACTS_READY` -> `AUTO_ROUTE_TARGET=rw-loop`
      - else if `HAS_ACTIVE_TASKS` and `PLAN_ARTIFACTS_READY` is false:
        - print `AUTO_PLAN_ARTIFACTS_MISSING`
@@ -104,7 +121,6 @@ Orchestration loop:
      - else if `HAS_ANY_TASK_ROW` and `PLAN_ARTIFACTS_READY` is false:
        - print `AUTO_PLAN_ARTIFACTS_MISSING`
        - `AUTO_ROUTE_TARGET=rw-planner`
-     - else if `HAS_FEATURE_SUMMARY` -> `AUTO_ROUTE_TARGET=rw-planner`
      - else:
        - print `AUTO_ROUTE_UNDECIDED`
        - print `AUTO_ROUTE_TARGET=rw-planner`
@@ -172,5 +188,6 @@ Rules:
 - Keep this agent orchestration-only.
 - Never edit product code or task contents directly.
 - Let planner/loop own their internal retry/review/archive decisions.
+- Explicit feature summary input must route to `rw-planner` before task continuation.
 - Never dispatch `rw-loop` when required plan artifacts are missing.
 - Always remove `.ai/runtime/rw-auto.lock` on controlled stop paths.

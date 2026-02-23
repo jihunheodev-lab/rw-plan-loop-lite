@@ -35,6 +35,7 @@ workspace/
 │  ├─ runtime/
 │  └─ memory/shared-memory.md
 └─ scripts/ (선택)
+   ├─ health/ai-health-check.mjs
    ├─ validation/check-prompts.mjs
    ├─ rw-smoke-test.sh
    ├─ rw-smoke-test.ps1
@@ -215,11 +216,13 @@ planner는 feature 파일명을 아래 순서로 선택합니다.
 ### 자동 오케스트레이션 사용
 
 1. `@rw-auto "기능 요약"` 실행
-2. `.ai/CONTEXT.md` 또는 `.ai/PROGRESS.md`가 없어도 `rw-auto`가 planner를 먼저 실행해 자동 복구 시도
-3. `rw-auto`가 내부적으로 `rw-planner`/`rw-loop`를 자동 실행
-4. 동시 실행 충돌 방지를 위해 `.ai/runtime/rw-auto.lock` 락을 사용
-5. 승인 필요 상태면 `FEATURE_REVIEW_REQUIRED`와 함께 `REASON/FILE/HINT`를 전달하고 멈춤
-6. `NEXT_COMMAND=done`이면 종료, 아니면 출력 토큰 기준으로 재개
+2. `rw-auto`가 시작 시 `scripts/health/ai-health-check.mjs`를 실행해 상태를 점검하고 필요하면 자동 복구 시도
+3. `.ai/CONTEXT.md` 또는 `.ai/PROGRESS.md`가 없어도 `rw-auto`가 planner를 먼저 실행해 자동 복구 시도
+4. 입력에 기능 요약이 있으면 기존 task row가 있어도 planner를 우선 실행 (새 요청 우선)
+5. `rw-auto`가 내부적으로 `rw-planner`/`rw-loop`를 자동 실행
+6. 동시 실행 충돌 방지를 위해 `.ai/runtime/rw-auto.lock` 락을 사용
+7. 승인 필요 상태면 `FEATURE_REVIEW_REQUIRED`와 함께 `REASON/FILE/HINT`를 전달하고 멈춤
+8. `NEXT_COMMAND=done`이면 종료, 아니면 출력 토큰 기준으로 재개
 
 ### 모드 옵션
 
@@ -262,6 +265,7 @@ planner는 feature 파일명을 아래 순서로 선택합니다.
 
 선택(운영 편의):
 - `scripts/validation/check-prompts.mjs`
+- `scripts/health/ai-health-check.mjs`
 - `scripts/rw-smoke-test.sh`
 - `scripts/rw-smoke-test.ps1`
 - `scripts/archive/archive-progress.mjs`
@@ -274,6 +278,7 @@ planner는 feature 파일명을 아래 순서로 선택합니다.
 ## 빠른 검증 명령
 
 ```bash
+node scripts/health/ai-health-check.mjs --mode check
 node scripts/validation/check-prompts.mjs
 bash scripts/rw-smoke-test.sh
 ```
@@ -281,6 +286,7 @@ bash scripts/rw-smoke-test.sh
 Windows PowerShell:
 
 ```powershell
+node scripts/health/ai-health-check.mjs --mode check
 node scripts/validation/check-prompts.mjs
 powershell -ExecutionPolicy Bypass -File scripts/rw-smoke-test.ps1
 ```

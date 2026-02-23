@@ -40,6 +40,7 @@ async function main() {
   const reviewPromptPath = path.join(root, ".github", "prompts", "subagents", "rw-loop-review.subagent.md");
   const memoryContractPath = path.join(root, "docs", "memory-contract.md");
   const featureTemplatePath = path.join(root, "docs", "feature-template.md");
+  const healthCheckPath = path.join(root, "scripts", "health", "ai-health-check.mjs");
 
   const planner = await read(plannerPath, errors);
   const loop = await read(loopPath, errors);
@@ -51,6 +52,7 @@ async function main() {
   const reviewPrompt = await read(reviewPromptPath, errors);
   const memoryContract = await read(memoryContractPath, errors);
   const featureTemplate = await read(featureTemplatePath, errors);
+  const healthCheck = await read(healthCheckPath, errors);
 
   if (planner) {
     requireToken(errors, "rw-planner.agent.md", planner, "name: rw-planner");
@@ -140,11 +142,21 @@ async function main() {
     requireToken(errors, "rw-auto.agent.md", auto, "AUTO_MAX_CYCLES_REACHED");
     requireToken(errors, "rw-auto.agent.md", auto, "AUTO_SUBAGENT_RESULT_INVALID");
     requireToken(errors, "rw-auto.agent.md", auto, "AUTO_PLAN_ARTIFACTS_MISSING");
+    requireToken(errors, "rw-auto.agent.md", auto, "AUTO_HEALTHCHECK_FAILED");
+    requireToken(errors, "rw-auto.agent.md", auto, "AUTO_INPUT_SUMMARY_OVERRIDES_TASKS");
+    requireToken(errors, "rw-auto.agent.md", auto, "ai-health-check.mjs --mode check");
     requireToken(errors, "rw-auto.agent.md", auto, "FEATURE_REVIEW_REQUIRED");
     requireToken(errors, "rw-auto.agent.md", auto, "FEATURE_REVIEW_REASON=<APPROVAL_MISSING|APPROVAL_RESET_SCOPE_CHANGED>");
     requireToken(errors, "rw-auto.agent.md", auto, "FEATURE_REVIEW_HINT=<what_to_edit>");
     requireToken(errors, "rw-auto.agent.md", auto, "NEXT_COMMAND=<rw-planner|rw-loop|rw-auto|done>");
     requireToken(errors, "rw-auto.agent.md", auto, "NEXT_COMMAND=rw-planner");
+  }
+
+  if (healthCheck) {
+    requireToken(errors, "scripts/health/ai-health-check.mjs", healthCheck, "AI_HEALTH_STATUS=");
+    requireToken(errors, "scripts/health/ai-health-check.mjs", healthCheck, "AI_HEALTH_FIX_APPLIED=");
+    requireToken(errors, "scripts/health/ai-health-check.mjs", healthCheck, "ACTIVE_PLAN_ID=");
+    requireToken(errors, "scripts/health/ai-health-check.mjs", healthCheck, "PLAN_DIR=");
   }
 
   if (coderPrompt) {
