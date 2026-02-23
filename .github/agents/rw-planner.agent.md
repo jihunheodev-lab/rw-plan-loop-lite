@@ -50,6 +50,7 @@ Output contract (failure):
   - `FEATURES_DIR_MISSING`
   - `FEATURE_FILE_MISSING`
   - `FEATURE_NOT_READY`
+  - `PLAN_ARTIFACTS_INCOMPLETE`
 - plus `NEXT_COMMAND=rw-planner`
 
 Step 0 (Mandatory):
@@ -277,8 +278,18 @@ Planning workflow (deterministic):
        - `edges` (`from`, `to`)
        - `parallel_groups` (independent task sets)
    - `.ai/runtime/rw-active-plan-id.txt`
-8) Create/update `.ai/tasks/TASK-00-READBEFORE.md`.
-9) Create atomic tasks `TASK-XX-*.md` (2~6 tasks).
+   - `.ai/PLAN.md` (must reflect current `PLAN_ID`, feature key, strategy, task range)
+8) Verify artifact completeness (mandatory):
+   - ensure the following exist and are non-empty under `.ai/plans/<PLAN_ID>/`:
+     - `plan-summary.yaml`
+     - `task-graph.yaml`
+     - at least one `research_findings_*.yaml`
+   - if any required artifact is missing/empty:
+     - print `PLAN_ARTIFACTS_INCOMPLETE`
+     - print `NEXT_COMMAND=rw-planner`
+     - stop
+9) Create/update `.ai/tasks/TASK-00-READBEFORE.md`.
+10) Create atomic tasks `TASK-XX-*.md` (2~6 tasks).
    Each task must contain:
    - `Phase` (e.g. `Phase 1`, `Phase 2`)
    - `Title`
@@ -291,15 +302,15 @@ Planning workflow (deterministic):
    - `Files to Create/Modify`
    - `Test Strategy`
    - `Verification`
-10) Update `.ai/PROGRESS.md`:
+11) Update `.ai/PROGRESS.md`:
    - append new task rows as `pending`
    - create/update `## Phase Status` section:
      - `Current Phase: Phase 1`
      - phase summary lines with `in-progress|completed|blocked`
    - append one log entry with task range
-11) Update feature status to `PLANNED`.
-12) Emit success output contract in exact order.
-13) Update `.ai/memory/shared-memory.md` with one short planning decision entry.
+12) Update feature status to `PLANNED`.
+13) Emit success output contract in exact order.
+14) Update `.ai/memory/shared-memory.md` with one short planning decision entry.
 
 Rules:
 - Keep machine tokens unchanged: `pending`, `in-progress`, `completed`, `blocked`, `VERIFICATION_EVIDENCE`.
@@ -309,4 +320,5 @@ Rules:
 - Planner must not create tasks before Phase E subagent-plan confirmation succeeds.
 - Planner must not create tasks before feature `Approval: APPROVED`.
 - Planner must treat `Feature Hash` as approval integrity guard.
+- Planner must verify plan artifact completeness before writing any task/progress changes.
 - Planner must write `task-graph.yaml` before emitting success output.

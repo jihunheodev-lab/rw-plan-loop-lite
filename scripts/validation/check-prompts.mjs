@@ -89,11 +89,13 @@ async function main() {
     requireToken(errors, "rw-planner.agent.md", planner, "winner_candidate_id");
     requireToken(errors, "rw-planner.agent.md", planner, "INTERVIEW_DEEP_REQUIRED");
     requireToken(errors, "rw-planner.agent.md", planner, "INTERVIEW_ABORTED");
+    requireToken(errors, "rw-planner.agent.md", planner, "PLAN_ARTIFACTS_INCOMPLETE");
     requireToken(errors, "rw-planner.agent.md", planner, "PLAN_ID=<id>");
     requireToken(errors, "rw-planner.agent.md", planner, "PLAN_TASK_RANGE=<TASK-XX~TASK-YY>");
     requireToken(errors, "rw-planner.agent.md", planner, "NEXT_COMMAND=rw-loop");
     requireToken(errors, "rw-planner.agent.md", planner, "## Phase Status");
     requireToken(errors, "rw-planner.agent.md", planner, "Accessibility Criteria");
+    requireToken(errors, "rw-planner.agent.md", planner, "Verify artifact completeness (mandatory):");
     requireToken(errors, "rw-planner.agent.md", planner, ".ai/memory/shared-memory.md");
   }
 
@@ -137,6 +139,7 @@ async function main() {
     requireToken(errors, "rw-auto.agent.md", auto, "fallback values when missing");
     requireToken(errors, "rw-auto.agent.md", auto, "AUTO_MAX_CYCLES_REACHED");
     requireToken(errors, "rw-auto.agent.md", auto, "AUTO_SUBAGENT_RESULT_INVALID");
+    requireToken(errors, "rw-auto.agent.md", auto, "AUTO_PLAN_ARTIFACTS_MISSING");
     requireToken(errors, "rw-auto.agent.md", auto, "FEATURE_REVIEW_REQUIRED");
     requireToken(errors, "rw-auto.agent.md", auto, "FEATURE_REVIEW_REASON=<APPROVAL_MISSING|APPROVAL_RESET_SCOPE_CHANGED>");
     requireToken(errors, "rw-auto.agent.md", auto, "FEATURE_REVIEW_HINT=<what_to_edit>");

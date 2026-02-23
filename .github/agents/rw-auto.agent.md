@@ -24,6 +24,7 @@ Failure token:
 - `AUTO_ROUTE_UNDECIDED`
 - `AUTO_MAX_CYCLES_REACHED`
 - `AUTO_SUBAGENT_RESULT_INVALID`
+- `AUTO_PLAN_ARTIFACTS_MISSING`
 - `FEATURE_REVIEW_REQUIRED`
   - with:
     - `FEATURE_REVIEW_REASON=<APPROVAL_MISSING|APPROVAL_RESET_SCOPE_CHANGED>`
@@ -82,6 +83,11 @@ Orchestration loop:
      - `HAS_READY_FEATURE`: any `.ai/features/*.md` with `Status: READY_FOR_PLAN`
      - `HAS_ANY_TASK_ROW`: any task row in `PROGRESS`
      - `HAS_FEATURE_SUMMARY`: non-empty argument summary (flags removed)
+     - `ACTIVE_PLAN_ID`: trimmed content of `.ai/runtime/rw-active-plan-id.txt` when readable
+     - `PLAN_ARTIFACTS_READY`: true only when all are present and non-empty for `ACTIVE_PLAN_ID`:
+       - `.ai/plans/<PLAN_ID>/plan-summary.yaml`
+       - `.ai/plans/<PLAN_ID>/task-graph.yaml`
+       - at least one `.ai/plans/<PLAN_ID>/research_findings_*.yaml`
    - Routing decision:
      - if `HAS_CONTEXT` is false:
        - print `AUTO_RECOVERY_CONTEXT_BOOTSTRAP`
@@ -89,9 +95,15 @@ Orchestration loop:
      - else if `HAS_PROGRESS` is false:
        - print `AUTO_RECOVERY_STATE_BOOTSTRAP`
        - `AUTO_ROUTE_TARGET=rw-planner`
-     - else if `HAS_ACTIVE_TASKS` -> `AUTO_ROUTE_TARGET=rw-loop`
+     - else if `HAS_ACTIVE_TASKS` and `PLAN_ARTIFACTS_READY` -> `AUTO_ROUTE_TARGET=rw-loop`
+     - else if `HAS_ACTIVE_TASKS` and `PLAN_ARTIFACTS_READY` is false:
+       - print `AUTO_PLAN_ARTIFACTS_MISSING`
+       - `AUTO_ROUTE_TARGET=rw-planner`
      - else if `HAS_READY_FEATURE` -> `AUTO_ROUTE_TARGET=rw-planner`
-     - else if `HAS_ANY_TASK_ROW` -> `AUTO_ROUTE_TARGET=rw-loop` (review/finish path)
+     - else if `HAS_ANY_TASK_ROW` and `PLAN_ARTIFACTS_READY` -> `AUTO_ROUTE_TARGET=rw-loop` (review/finish path)
+     - else if `HAS_ANY_TASK_ROW` and `PLAN_ARTIFACTS_READY` is false:
+       - print `AUTO_PLAN_ARTIFACTS_MISSING`
+       - `AUTO_ROUTE_TARGET=rw-planner`
      - else if `HAS_FEATURE_SUMMARY` -> `AUTO_ROUTE_TARGET=rw-planner`
      - else:
        - print `AUTO_ROUTE_UNDECIDED`
@@ -160,4 +172,5 @@ Rules:
 - Keep this agent orchestration-only.
 - Never edit product code or task contents directly.
 - Let planner/loop own their internal retry/review/archive decisions.
+- Never dispatch `rw-loop` when required plan artifacts are missing.
 - Always remove `.ai/runtime/rw-auto.lock` on controlled stop paths.
