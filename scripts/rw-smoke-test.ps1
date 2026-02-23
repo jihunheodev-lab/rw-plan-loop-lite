@@ -1,13 +1,12 @@
 $ErrorActionPreference = "Stop"
 
 $root = Split-Path -Parent $PSScriptRoot
-Write-Output "=== RW 3-Agent Lite Smoke Test (PowerShell) ==="
+Write-Output "=== RW 2-Agent Lite Smoke Test (PowerShell) ==="
 Write-Output "root=$root"
 
 $required = @(
   "$root/.github/agents/rw-planner.agent.md",
   "$root/.github/agents/rw-loop.agent.md",
-  "$root/.github/agents/rw-auto.agent.md",
   "$root/.github/prompts/subagents/rw-loop-coder.subagent.md",
   "$root/.github/prompts/subagents/rw-loop-task-inspector.subagent.md",
   "$root/.github/prompts/subagents/rw-loop-security-review.subagent.md",
@@ -33,9 +32,13 @@ if ($LASTEXITCODE -ne 0) {
 
 # Contract-focused smoke checks for recent guardrails.
 $plannerPrompt = Get-Content -Raw "$root/.github/agents/rw-planner.agent.md"
-$autoPrompt = Get-Content -Raw "$root/.github/agents/rw-auto.agent.md"
 
 $plannerRequired = @(
+  "handoffs:",
+  "label: Start Implementation",
+  "agent: rw-loop",
+  "Allowed writes: .ai/** only.",
+  "Disallowed writes: product code paths",
   "FEATURE_REVIEW_REASON=<APPROVAL_MISSING|APPROVAL_RESET_SCOPE_CHANGED>",
   "FEATURE_REVIEW_HINT=<what_to_edit>",
   "Feature Hash: <sha256>",
@@ -49,21 +52,6 @@ $plannerRequired = @(
 foreach ($token in $plannerRequired) {
   if (-not $plannerPrompt.Contains($token)) {
     Write-Output "SMOKE_FAIL planner_token_missing=$token"
-    exit 1
-  }
-}
-
-$autoRequired = @(
-  "AUTO_RECOVERY_CONTEXT_BOOTSTRAP",
-  "AUTO_RECOVERY_STATE_BOOTSTRAP",
-  ".ai/runtime/rw-auto.lock",
-  "AUTO_LOCK_HELD",
-  "exact-prefix extraction"
-)
-
-foreach ($token in $autoRequired) {
-  if (-not $autoPrompt.Contains($token)) {
-    Write-Output "SMOKE_FAIL auto_token_missing=$token"
     exit 1
   }
 }
@@ -84,7 +72,7 @@ foreach ($token in $loopRequired) {
 }
 
 # Archive smoke on temporary root
-$tmp = Join-Path $env:TEMP ("rw3lite-smoke-" + [guid]::NewGuid().ToString("N"))
+$tmp = Join-Path $env:TEMP ("rw2lite-smoke-" + [guid]::NewGuid().ToString("N"))
 New-Item -ItemType Directory -Path $tmp | Out-Null
 New-Item -ItemType Directory -Path (Join-Path $tmp ".ai/progress-archive") -Force | Out-Null
 

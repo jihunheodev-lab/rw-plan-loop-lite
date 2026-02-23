@@ -2,13 +2,12 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-echo "=== RW 3-Agent Lite Smoke Test ==="
+echo "=== RW 2-Agent Lite Smoke Test ==="
 echo "root=$ROOT"
 
 required_files=(
   "$ROOT/.github/agents/rw-planner.agent.md"
   "$ROOT/.github/agents/rw-loop.agent.md"
-  "$ROOT/.github/agents/rw-auto.agent.md"
   "$ROOT/.github/prompts/subagents/rw-loop-coder.subagent.md"
   "$ROOT/.github/prompts/subagents/rw-loop-task-inspector.subagent.md"
   "$ROOT/.github/prompts/subagents/rw-loop-security-review.subagent.md"
@@ -31,9 +30,13 @@ node "$ROOT/scripts/validation/check-prompts.mjs"
 
 # Contract-focused smoke checks for recent guardrails.
 planner_prompt="$(cat "$ROOT/.github/agents/rw-planner.agent.md")"
-auto_prompt="$(cat "$ROOT/.github/agents/rw-auto.agent.md")"
 
 planner_required=(
+  "handoffs:"
+  "label: Start Implementation"
+  "agent: rw-loop"
+  "Allowed writes: .ai/** only."
+  "Disallowed writes: product code paths"
   "FEATURE_REVIEW_REASON=<APPROVAL_MISSING|APPROVAL_RESET_SCOPE_CHANGED>"
   "FEATURE_REVIEW_HINT=<what_to_edit>"
   "Feature Hash: <sha256>"
@@ -47,21 +50,6 @@ planner_required=(
 for token in "${planner_required[@]}"; do
   if [[ "$planner_prompt" != *"$token"* ]]; then
     echo "SMOKE_FAIL planner_token_missing=$token"
-    exit 1
-  fi
-done
-
-auto_required=(
-  "AUTO_RECOVERY_CONTEXT_BOOTSTRAP"
-  "AUTO_RECOVERY_STATE_BOOTSTRAP"
-  ".ai/runtime/rw-auto.lock"
-  "AUTO_LOCK_HELD"
-  "exact-prefix extraction"
-)
-
-for token in "${auto_required[@]}"; do
-  if [[ "$auto_prompt" != *"$token"* ]]; then
-    echo "SMOKE_FAIL auto_token_missing=$token"
     exit 1
   fi
 done
@@ -81,7 +69,7 @@ for token in "${loop_required[@]}"; do
   fi
 done
 
-TMP_DIR="$(mktemp -d "${TMPDIR:-/tmp}/rw3lite-smoke-XXXXXX")"
+TMP_DIR="$(mktemp -d "${TMPDIR:-/tmp}/rw2lite-smoke-XXXXXX")"
 mkdir -p "$TMP_DIR/.ai/progress-archive"
 cat > "$TMP_DIR/.ai/PROGRESS.md" <<'EOF'
 # Progress

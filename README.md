@@ -1,14 +1,15 @@
-# RW 3-Agent Lite
+# RW 2-Agent Lite
 
-실사용 기준으로 최소 구성만 남긴 3-에이전트 오케스트레이션 템플릿입니다.
+실사용 기준으로 최소 구성만 남긴 2-에이전트 오케스트레이션 템플릿입니다.
 
 - `rw-planner`: 하이브리드 인터뷰(askQuestions) + 요구사항 정리 + 태스크 분해
 - `rw-loop`: 구현 위임 + 검증 + 리뷰 게이트
-- `rw-auto`: 상태 감지 + planner/loop 자동 실행(오케스트레이션)
 
 핵심 의도:
 - 사용은 쉽게 (`@rw-planner` -> `@rw-loop`)
 - 동작은 견고하게 (Step 0 가드, 상태 토큰 계약, 검증 증거 강제)
+
+`rw-auto`는 제거했습니다. 이유는 planner 인터뷰(`askQuestions`) 안정성과 nested subagent 호출 리스크를 줄이기 위함입니다.
 
 ## 한눈에 보는 구조
 
@@ -17,8 +18,7 @@ workspace/
 ├─ .github/
 │  ├─ agents/
 │  │  ├─ rw-planner.agent.md
-│  │  ├─ rw-loop.agent.md
-│  │  └─ rw-auto.agent.md
+│  │  └─ rw-loop.agent.md
 │  └─ prompts/subagents/
 │     ├─ rw-loop-coder.subagent.md
 │     ├─ rw-loop-task-inspector.subagent.md
@@ -48,8 +48,7 @@ workspace/
 
 ```mermaid
 flowchart TD
-    A[사용자 요청] --> B[@rw-auto 또는 @rw-planner]
-    B --> C[Step 0: .ai/CONTEXT.md 확인]
+    A[사용자 요청] --> C[@rw-planner: Step 0 + 인터뷰]
     C --> D[@rw-planner: feature -> plan -> tasks]
     D --> E[NEXT_COMMAND=rw-loop]
     E --> F[@rw-loop: task lock -> coder 위임]
@@ -88,7 +87,6 @@ pending -> in-progress -> completed
 |---|---|---|---|
 | `rw-planner` | feature 수집, `PLAN_ID` 생성, `TASK-XX` 분해, `PROGRESS` 동기화 | 제품 코드 직접 구현 | `NEXT_COMMAND=rw-loop` |
 | `rw-loop` | task 선택/락, coder 위임, 증거 검증, user-path/security/phase/review 게이트 | planner 역할(요구사항 재정의) | `NEXT_COMMAND=done/rw-loop/rw-planner` |
-| `rw-auto` | 상태 감지, planner/loop 자동 디스패치, 반복 사이클 관리 | planner/loop 내부 로직 직접 수행 | `AUTO_CYCLE=...`, `AUTO_ROUTE_TARGET=...`, `NEXT_COMMAND=...` |
 
 ## Step 0 가드 (견고성 핵심)
 
@@ -113,7 +111,9 @@ pending -> in-progress -> completed
 1. VS Code에서 워크스페이스 열기
 2. `@rw-planner "원라인 기능 요청"`
 3. `@rw-loop`
-4. 완료될 때까지 `@rw-loop` 반복 (또는 `@rw-auto`로 자동 순환)
+4. 완료될 때까지 `@rw-loop` 반복
+
+`rw-planner`에는 handoff(`Start Implementation`)가 설정되어 있어, UI에서 바로 `rw-loop`로 넘길 수 있습니다.
 
 ### Planner 질문 정책 (Hybrid)
 
@@ -213,17 +213,6 @@ planner는 feature 파일명을 아래 순서로 선택합니다.
 - `.ai/features/JIRA-123-add-search-command.md`
 - `.ai/features/FEATURE-04-add-search-command.md`
 
-### 자동 오케스트레이션 사용
-
-1. `@rw-auto "기능 요약"` 실행
-2. `rw-auto`가 시작 시 `scripts/health/ai-health-check.mjs`를 실행해 상태를 점검하고 필요하면 자동 복구 시도
-3. `.ai/CONTEXT.md` 또는 `.ai/PROGRESS.md`가 없어도 `rw-auto`가 planner를 먼저 실행해 자동 복구 시도
-4. 입력에 기능 요약이 있으면 기존 task row가 있어도 planner를 우선 실행 (새 요청 우선)
-5. `rw-auto`가 내부적으로 `rw-planner`/`rw-loop`를 자동 실행
-6. 동시 실행 충돌 방지를 위해 `.ai/runtime/rw-auto.lock` 락을 사용
-7. 승인 필요 상태면 `FEATURE_REVIEW_REQUIRED`와 함께 `REASON/FILE/HINT`를 전달하고 멈춤
-8. `NEXT_COMMAND=done`이면 종료, 아니면 출력 토큰 기준으로 재개
-
 ### 모드 옵션
 
 - `@rw-loop --auto` 또는 `@rw-loop --no-hitl`: 중간 확인 질문 최소화
@@ -259,7 +248,6 @@ planner는 feature 파일명을 아래 순서로 선택합니다.
 필수(실행 엔진):
 - `.github/agents/rw-planner.agent.md`
 - `.github/agents/rw-loop.agent.md`
-- `.github/agents/rw-auto.agent.md`
 - `.github/prompts/subagents/rw-loop-*.subagent.md`
 - `.github/prompts/subagents/rw-loop-security-review.subagent.md`
 

@@ -4,6 +4,11 @@ description: "Lite+Contract planner: hybrid askQuestions + subagent planning + D
 agent: agent
 argument-hint: "Feature request. Planner always asks mandatory need-gate questions, then deep-dive if ambiguous."
 tools: ['search', 'read', 'web', 'vscode/memory', 'github/issue_read', 'github.vscode-pull-request-github/issue_fetch', 'github.vscode-pull-request-github/activePullRequest', 'execute/getTerminalOutput', 'execute/testFailure', 'agent', 'vscode/askQuestions']
+handoffs:
+  - label: Start Implementation
+    agent: rw-loop
+    prompt: "Start implementation from the current plan."
+    send: true
 ---
 
 Language policy reference: `.ai/CONTEXT.md`
@@ -76,7 +81,11 @@ Step 0 (Mandatory):
    - print `NEXT_COMMAND=rw-planner`
    - stop
 9) Do not write product code.
-10) If `askQuestions` is unavailable:
+10) Write scope policy (mandatory):
+   - Allowed writes: .ai/** only.
+   - Disallowed writes: product code paths such as `src/**`, `app/**`, `server/**`, `packages/**`.
+   - If implementation changes are needed, finish planning outputs first, then hand off to `rw-loop`.
+11) If `askQuestions` is unavailable:
    - print `INTERVIEW_REQUIRED`
    - print `NEXT_COMMAND=rw-planner`
    - stop
