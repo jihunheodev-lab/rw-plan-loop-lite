@@ -4,7 +4,7 @@
 
 - `rw-planner`: 하이브리드 인터뷰(askQuestions) + 요구사항 정리 + 태스크 분해
 - `rw-loop`: 구현 위임 + 검증 + 리뷰 게이트
-- `rw-auto`: 상태 감지 + 다음 top-level 명령 라우팅(오케스트레이션)
+- `rw-auto`: 상태 감지 + planner/loop 자동 실행(오케스트레이션)
 
 핵심 의도:
 - 사용은 쉽게 (`@rw-planner` -> `@rw-loop`)
@@ -35,7 +35,6 @@ workspace/
 │  ├─ runtime/
 │  └─ memory/shared-memory.md
 └─ scripts/ (선택)
-   ├─ orchestrator/rw-top-level-runner.mjs
    ├─ health/ai-health-check.mjs
    ├─ validation/check-prompts.mjs
    ├─ rw-smoke-test.sh
@@ -51,8 +50,7 @@ workspace/
 flowchart TD
     A[사용자 요청] --> B[@rw-auto 또는 @rw-planner]
     B --> C[Step 0: .ai/CONTEXT.md 확인]
-    C --> C2[rw-auto: NEXT_COMMAND 라우팅]
-    C2 --> D[@rw-planner: feature -> plan -> tasks]
+    C --> D[@rw-planner: feature -> plan -> tasks]
     D --> E[NEXT_COMMAND=rw-loop]
     E --> F[@rw-loop: task lock -> coder 위임]
     F --> G[검증: completion delta + VERIFICATION_EVIDENCE]
@@ -90,7 +88,7 @@ pending -> in-progress -> completed
 |---|---|---|---|
 | `rw-planner` | feature 수집, `PLAN_ID` 생성, `TASK-XX` 분해, `PROGRESS` 동기화 | 제품 코드 직접 구현 | `NEXT_COMMAND=rw-loop` |
 | `rw-loop` | task 선택/락, coder 위임, 증거 검증, user-path/security/phase/review 게이트 | planner 역할(요구사항 재정의) | `NEXT_COMMAND=done/rw-loop/rw-planner` |
-| `rw-auto` | 상태 감지, health-check, lock 관리, next command 라우팅 | planner/loop를 subagent로 내부 실행 | `AUTO_EXECUTION_MODE=ROUTE_ONLY`, `AUTO_ROUTE_TARGET=...`, `NEXT_COMMAND=...` |
+| `rw-auto` | 상태 감지, planner/loop 자동 디스패치, 반복 사이클 관리 | planner/loop 내부 로직 직접 수행 | `AUTO_CYCLE=...`, `AUTO_ROUTE_TARGET=...`, `NEXT_COMMAND=...` |
 
 ## Step 0 가드 (견고성 핵심)
 
@@ -115,8 +113,7 @@ pending -> in-progress -> completed
 1. VS Code에서 워크스페이스 열기
 2. `@rw-planner "원라인 기능 요청"`
 3. `@rw-loop`
-4. 완료될 때까지 `@rw-loop` 반복
-5. `@rw-auto`는 자동 실행기가 아니라 다음 top-level 명령 제안 라우터로 사용
+4. 완료될 때까지 `@rw-loop` 반복 (또는 `@rw-auto`로 자동 순환)
 
 ### Planner 질문 정책 (Hybrid)
 
@@ -216,41 +213,16 @@ planner는 feature 파일명을 아래 순서로 선택합니다.
 - `.ai/features/JIRA-123-add-search-command.md`
 - `.ai/features/FEATURE-04-add-search-command.md`
 
-### 자동 오케스트레이션 사용 (Route-Only)
+### 자동 오케스트레이션 사용
 
 1. `@rw-auto "기능 요약"` 실행
-2. `rw-auto`가 `scripts/health/ai-health-check.mjs`로 상태 점검/복구 시도
-3. `rw-auto`가 `.ai/runtime/rw-auto.lock`으로 동시 실행 충돌 방지
-4. `rw-auto`는 내부에서 planner/loop를 실행하지 않고 아래 토큰만 반환
-   - `AUTO_EXECUTION_MODE=ROUTE_ONLY`
-   - `AUTO_ROUTE_TARGET=<rw-planner|rw-loop|done>`
-   - `NEXT_COMMAND=<...>`
-5. 호출자(사용자/러너)가 `NEXT_COMMAND`를 읽고 top-level로 `@rw-planner` 또는 `@rw-loop` 실행
-6. `NEXT_COMMAND=done`이면 종료
-
-### Top-Level Runner (선택)
-
-`rw-auto`를 route-only로 유지하면서도 자동 순환을 원하면 외부 러너를 사용합니다.
-
-- 스크립트: `scripts/orchestrator/rw-top-level-runner.mjs`
-- 역할: child 출력에서 `NEXT_COMMAND`(또는 `AUTO_ROUTE_TARGET`)를 파싱해 다음 top-level 명령 실행
-- 주의: 실제 에이전트 실행 명령은 환경마다 달라서 템플릿으로 주입
-
-예시(더미 명령으로 러너 동작 확인):
-
-```powershell
-node scripts/orchestrator/rw-top-level-runner.mjs `
-  --auto-cmd "node -e \"console.log('NEXT_COMMAND=rw-planner')\"" `
-  --planner-cmd "node -e \"console.log('NEXT_COMMAND=rw-loop')\"" `
-  --loop-cmd "node -e \"console.log('NEXT_COMMAND=done')\""
-```
-
-템플릿 변수:
-- `{summary}`: 원본 기능 요약
-- `{summary_json}`: JSON escaped 요약 문자열
-- `{loop_flags}`: loop 옵션 문자열
-- `{step}`: 현재 스텝 번호
-- `{agent}`: 현재 대상 에이전트
+2. `rw-auto`가 시작 시 `scripts/health/ai-health-check.mjs`를 실행해 상태를 점검하고 필요하면 자동 복구 시도
+3. `.ai/CONTEXT.md` 또는 `.ai/PROGRESS.md`가 없어도 `rw-auto`가 planner를 먼저 실행해 자동 복구 시도
+4. 입력에 기능 요약이 있으면 기존 task row가 있어도 planner를 우선 실행 (새 요청 우선)
+5. `rw-auto`가 내부적으로 `rw-planner`/`rw-loop`를 자동 실행
+6. 동시 실행 충돌 방지를 위해 `.ai/runtime/rw-auto.lock` 락을 사용
+7. 승인 필요 상태면 `FEATURE_REVIEW_REQUIRED`와 함께 `REASON/FILE/HINT`를 전달하고 멈춤
+8. `NEXT_COMMAND=done`이면 종료, 아니면 출력 토큰 기준으로 재개
 
 ### 모드 옵션
 
@@ -293,7 +265,6 @@ node scripts/orchestrator/rw-top-level-runner.mjs `
 
 선택(운영 편의):
 - `scripts/validation/check-prompts.mjs`
-- `scripts/orchestrator/rw-top-level-runner.mjs`
 - `scripts/health/ai-health-check.mjs`
 - `scripts/rw-smoke-test.sh`
 - `scripts/rw-smoke-test.ps1`

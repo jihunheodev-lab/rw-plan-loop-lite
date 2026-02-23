@@ -41,7 +41,6 @@ async function main() {
   const memoryContractPath = path.join(root, "docs", "memory-contract.md");
   const featureTemplatePath = path.join(root, "docs", "feature-template.md");
   const healthCheckPath = path.join(root, "scripts", "health", "ai-health-check.mjs");
-  const topLevelRunnerPath = path.join(root, "scripts", "orchestrator", "rw-top-level-runner.mjs");
 
   const planner = await read(plannerPath, errors);
   const loop = await read(loopPath, errors);
@@ -54,7 +53,6 @@ async function main() {
   const memoryContract = await read(memoryContractPath, errors);
   const featureTemplate = await read(featureTemplatePath, errors);
   const healthCheck = await read(healthCheckPath, errors);
-  const topLevelRunner = await read(topLevelRunnerPath, errors);
 
   if (planner) {
     requireToken(errors, "rw-planner.agent.md", planner, "name: rw-planner");
@@ -131,19 +129,26 @@ async function main() {
     requireToken(errors, "rw-auto.agent.md", auto, "name: rw-auto");
     requireToken(errors, "rw-auto.agent.md", auto, "Language policy reference: `.ai/CONTEXT.md`");
     requireToken(errors, "rw-auto.agent.md", auto, "LANG_POLICY_MISSING");
-    requireToken(errors, "rw-auto.agent.md", auto, "AUTO_EXECUTION_MODE=ROUTE_ONLY");
+    requireToken(errors, "rw-auto.agent.md", auto, "runSubagent");
+    requireToken(errors, "rw-auto.agent.md", auto, "AUTO_CYCLE=<n>");
     requireToken(errors, "rw-auto.agent.md", auto, "AUTO_ROUTE_TARGET=<rw-planner|rw-loop|done>");
-    requireToken(errors, "rw-auto.agent.md", auto, "AUTO_ROUTE_REASON=<RECOVERY_CONTEXT|RECOVERY_STATE|FEATURE_SUMMARY|ACTIVE_TASKS|TASK_ROWS_REVIEW|READY_FEATURE|PLAN_ARTIFACTS_MISSING|NO_WORK|UNDECIDED_DEFAULT>");
     requireToken(errors, "rw-auto.agent.md", auto, "AUTO_ROUTE_UNDECIDED");
+    requireToken(errors, "rw-auto.agent.md", auto, "AUTO_RECOVERY_CONTEXT_BOOTSTRAP");
+    requireToken(errors, "rw-auto.agent.md", auto, "AUTO_RECOVERY_STATE_BOOTSTRAP");
     requireToken(errors, "rw-auto.agent.md", auto, ".ai/runtime/rw-auto.lock");
     requireToken(errors, "rw-auto.agent.md", auto, "AUTO_LOCK_HELD");
+    requireToken(errors, "rw-auto.agent.md", auto, "exact-prefix extraction");
+    requireToken(errors, "rw-auto.agent.md", auto, "fallback values when missing");
+    requireToken(errors, "rw-auto.agent.md", auto, "AUTO_MAX_CYCLES_REACHED");
+    requireToken(errors, "rw-auto.agent.md", auto, "AUTO_SUBAGENT_RESULT_INVALID");
     requireToken(errors, "rw-auto.agent.md", auto, "AUTO_PLAN_ARTIFACTS_MISSING");
     requireToken(errors, "rw-auto.agent.md", auto, "AUTO_HEALTHCHECK_FAILED");
     requireToken(errors, "rw-auto.agent.md", auto, "AUTO_INPUT_SUMMARY_OVERRIDES_TASKS");
     requireToken(errors, "rw-auto.agent.md", auto, "ai-health-check.mjs --mode check");
-    requireToken(errors, "rw-auto.agent.md", auto, "PAUSE_DETECTED");
-    requireToken(errors, "rw-auto.agent.md", auto, "Never call `runSubagent`.");
-    requireToken(errors, "rw-auto.agent.md", auto, "NEXT_COMMAND=<rw-planner|rw-loop|done|rw-auto>");
+    requireToken(errors, "rw-auto.agent.md", auto, "FEATURE_REVIEW_REQUIRED");
+    requireToken(errors, "rw-auto.agent.md", auto, "FEATURE_REVIEW_REASON=<APPROVAL_MISSING|APPROVAL_RESET_SCOPE_CHANGED>");
+    requireToken(errors, "rw-auto.agent.md", auto, "FEATURE_REVIEW_HINT=<what_to_edit>");
+    requireToken(errors, "rw-auto.agent.md", auto, "NEXT_COMMAND=<rw-planner|rw-loop|rw-auto|done>");
     requireToken(errors, "rw-auto.agent.md", auto, "NEXT_COMMAND=rw-planner");
   }
 
@@ -152,14 +157,6 @@ async function main() {
     requireToken(errors, "scripts/health/ai-health-check.mjs", healthCheck, "AI_HEALTH_FIX_APPLIED=");
     requireToken(errors, "scripts/health/ai-health-check.mjs", healthCheck, "ACTIVE_PLAN_ID=");
     requireToken(errors, "scripts/health/ai-health-check.mjs", healthCheck, "PLAN_DIR=");
-  }
-
-  if (topLevelRunner) {
-    requireToken(errors, "scripts/orchestrator/rw-top-level-runner.mjs", topLevelRunner, "RUNNER_MODE=TOP_LEVEL");
-    requireToken(errors, "scripts/orchestrator/rw-top-level-runner.mjs", topLevelRunner, "RUNNER_NEXT_COMMAND=");
-    requireToken(errors, "scripts/orchestrator/rw-top-level-runner.mjs", topLevelRunner, "RUNNER_MAX_STEPS_REACHED");
-    requireToken(errors, "scripts/orchestrator/rw-top-level-runner.mjs", topLevelRunner, "NEXT_COMMAND");
-    requireToken(errors, "scripts/orchestrator/rw-top-level-runner.mjs", topLevelRunner, "AUTO_ROUTE_TARGET");
   }
 
   if (coderPrompt) {
