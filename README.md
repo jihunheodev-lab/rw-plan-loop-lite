@@ -117,14 +117,18 @@ pending -> in-progress -> completed
 
 ### Planner 질문 정책 (Hybrid)
 
-`rw-planner`는 입력이 있어도 질문을 생략하지 않습니다.
+`rw-planner`는 필수 필드를 항상 채우되, 질문은 누락/모호한 항목에만 수행합니다.
 
-1. 1차 Need-Gate(항상): 4개 핵심 질문
+1. 1차 Need-Gate(최대 4개): 입력에서 먼저 필드 추출 후 필요한 질문만 배치
 2. 필수 확인 항목:
    `TARGET_KIND` (`PRODUCT_CODE` / `AGENT_WORKFLOW`), `USER_PATH`,
    범위 경계(`in-scope` / `out-of-scope`), `ACCEPTANCE_SIGNAL`
-3. 2차 Deep-Dive(조건부): 애매하거나 리스크가 크면 6~10개 추가 질문
-4. 최종 확인(항상): 요약 확인 질문에 동의해야 태스크 생성
+3. `TARGET_KIND` 기본값:
+   - 기본 `PRODUCT_CODE`
+   - `.github/agents/**`, `.github/prompts/**`, `.ai/**`, `scripts/health/**`, `scripts/validation/**` 등
+     에이전트/오케스트레이션 자산 수정 요청일 때만 `AGENT_WORKFLOW`
+4. 2차 Deep-Dive(조건부): 애매하거나 리스크가 크면 6~10개 추가 질문
+5. 최종 확인(항상): 요약 확인 질문에 동의해야 태스크 생성
 
 ### Planner 서브에이전트 계획 단계
 
@@ -141,7 +145,7 @@ pending -> in-progress -> completed
 `rw-planner`는 별도 명령어 없이 모호도를 점수화하고 계획 전략을 자동 선택합니다.
 
 점수 규칙(최대 100):
-- `TARGET_KIND` 불명확: +25
+- `TARGET_KIND` 기본 추론 후에도 충돌: +5
 - `USER_PATH` 불명확: +25
 - `SCOPE_BOUNDARY` 불명확: +20
 - `ACCEPTANCE_SIGNAL` 불명확: +20

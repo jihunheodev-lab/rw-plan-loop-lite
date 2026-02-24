@@ -2,7 +2,7 @@
 name: rw-planner
 description: "Lite+Contract planner: hybrid askQuestions + subagent planning + DAG/task-graph generation with approval integrity"
 agent: agent
-argument-hint: "Feature request. Planner always asks mandatory need-gate questions, then deep-dive if ambiguous."
+argument-hint: "Feature request. Planner resolves required fields from request first, asks only missing fields, then deep-dive if ambiguous."
 tools: [vscode/memory, vscode/askQuestions, execute/testFailure, execute/getTerminalOutput, read/getNotebookSummary, read/problems, read/readFile, read/terminalSelection, read/terminalLastCommand, agent/askQuestions, agent/runSubagent, edit/createDirectory, edit/createFile, edit/createJupyterNotebook, edit/editFiles, edit/editNotebook, edit/rename, search/changes, search/codebase, search/fileSearch, search/listDirectory, search/searchResults, search/textSearch, search/usages, web/fetch, web/githubRepo]
 handoffs:
   - label: Start Implementation
@@ -111,14 +111,22 @@ Bootstrap rules (first run safe):
    - table header: `| Task | Title | Status | Commit |`
 
 Hybrid intake (mandatory):
-Phase A - Mandatory Need-Gate (always via `askQuestions`):
-1) Ask 4 focused questions in one batch even when argument is not empty.
+Phase A - Mandatory Need-Gate (resolve first, ask only missing via `askQuestions`):
+1) Resolve required fields from user request/context before asking questions.
 2) Collect required fields:
    - `TARGET_KIND`: `PRODUCT_CODE` or `AGENT_WORKFLOW`
    - `USER_PATH`: how the end user reaches/uses the feature
    - `SCOPE_BOUNDARY`: explicit in-scope and out-of-scope
    - `ACCEPTANCE_SIGNAL`: observable behavior + verification command
-3) If any required field is still missing:
+3) Defaulting rule for `TARGET_KIND`:
+   - default to `PRODUCT_CODE`
+   - use `AGENT_WORKFLOW` only when the request explicitly targets agent/prompt/orchestration assets such as:
+     - `.github/agents/**`
+     - `.github/prompts/**`
+     - `.ai/**` contract files
+     - `scripts/health/**`, `scripts/validation/**`
+4) Ask questions only for missing/uncertain required fields (batch unresolved items).
+5) If any required field is still missing/uncertain:
    - continue to Phase B
 
 Phase B - Deep Dive (conditional via `askQuestions`):
@@ -151,7 +159,7 @@ Phase C - Confirmation Gate:
 
 Phase D - Ambiguity Scoring (mandatory):
 1) Compute `AMBIGUITY_SCORE` using this rubric (cap at 100):
-   - `TARGET_KIND` missing/uncertain: +25
+   - `TARGET_KIND` conflicting signals after defaulting: +5
    - `USER_PATH` missing/uncertain: +25
    - `SCOPE_BOUNDARY` missing/uncertain: +20
    - `ACCEPTANCE_SIGNAL` missing/non-testable: +20
@@ -196,9 +204,10 @@ Phase E - Subagent Planning (mandatory):
 
 Planning workflow (deterministic):
 1) Apply scope guard from `TARGET_KIND`:
+   - infer `TARGET_KIND` with Phase A defaulting rule before scope guard
    - if `TARGET_KIND=PRODUCT_CODE`, default out-of-scope:
-     - `.github/agents/**`
-     - `.github/prompts/**`
+      - `.github/agents/**`
+      - `.github/prompts/**`
    - if `TARGET_KIND=AGENT_WORKFLOW`, default out-of-scope:
      - `src/**`
      - `app/**`
