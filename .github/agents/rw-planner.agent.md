@@ -13,6 +13,12 @@ handoffs:
 
 Language policy reference: `.ai/CONTEXT.md`
 
+Artifact language policy (mandatory):
+- Read `.ai/CONTEXT.md` language policy before writing `.ai/**` artifacts.
+- Plan/feature/task prose under `.ai/**` must follow `Response language` in `.ai/CONTEXT.md`.
+- Section headers may remain English unless `.ai/CONTEXT.md` states otherwise.
+- Machine tokens, status values, and command tokens must remain English.
+
 Quick summary:
 - Bootstrap minimal `.ai` state on first run.
 - Run hybrid intake interview (mandatory short gate + conditional deep-dive).
@@ -308,8 +314,8 @@ Planning workflow (deterministic):
      - stop
 9) Create/update `.ai/tasks/TASK-00-READBEFORE.md`.
 10) Create atomic tasks `TASK-XX-*.md` (2~6 tasks).
-   Each task must contain:
-   - `Phase` (e.g. `Phase 1`, `Phase 2`)
+    Each task must contain:
+    - `Phase` (e.g. `Phase 1`, `Phase 2`)
    - `Title`
    - `Dependencies`
    - `Dependency Rationale`
@@ -317,9 +323,12 @@ Planning workflow (deterministic):
    - `Description`
    - `Acceptance Criteria`
    - `Accessibility Criteria`
-   - `Files to Create/Modify`
-   - `Test Strategy`
-   - `Verification`
+    - `Files to Create/Modify`
+    - `Test Strategy`
+    - `Verification`
+    - content guidance:
+      - write task descriptions/acceptance prose in the response language defined by `.ai/CONTEXT.md`
+      - keep section headers and machine tokens in English unless `.ai/CONTEXT.md` overrides headers
 11) Update `.ai/PROGRESS.md`:
    - append new task rows as `pending`
    - create/update `## Phase Status` section:

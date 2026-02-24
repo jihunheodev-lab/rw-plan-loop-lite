@@ -130,6 +130,11 @@ pending -> in-progress -> completed
 4. 2차 Deep-Dive(조건부): 애매하거나 리스크가 크면 6~10개 추가 질문
 5. 최종 확인(항상): 요약 확인 질문에 동의해야 태스크 생성
 
+### Planner 문서 언어 정책
+
+- 계획/feature/task 본문(prose)은 `.ai/CONTEXT.md`의 `Response language`를 따름
+- 헤더와 machine token은 영어 유지 (컨텍스트에서 별도 지시가 있으면 따름)
+
 ### Planner 서브에이전트 계획 단계
 
 `rw-planner`는 계획 생성 시 `runSubagent`를 사용합니다.

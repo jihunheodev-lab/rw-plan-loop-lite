@@ -1,6 +1,7 @@
 # Feature Template (Lite)
 
 Use this structure for `.ai/features/<key>-<slug>.md`.
+Write prose in the `Response language` defined by `.ai/CONTEXT.md`.
 
 Naming:
 - Preferred: `<ISSUE_KEY>-<slug>.md` (example: `JIRA-123-add-search-command.md`)
@@ -54,3 +55,4 @@ Naming:
 Notes:
 - If scope changes after approval, reset `Approval` to `PENDING`.
 - Keep machine-readable tokens in English.
+- Keep headers in English if needed, and follow `.ai/CONTEXT.md` for prose language.
