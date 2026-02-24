@@ -16,6 +16,7 @@ Quick summary:
 - Run phase inspector with explicit phase review status contract.
 - Run final review gate before success.
 - Support controlled parallel mode for independent tasks only (up to 4).
+- Publish an optional user-acceptance checklist artifact for manual testing.
 
 Contract tokens:
 - `RUNSUBAGENT_DISPATCH_BEGIN <TASK-XX>`
@@ -211,10 +212,22 @@ Main loop:
    - on fail/escalate, print:
      - `NEXT_COMMAND=rw-loop` or `NEXT_COMMAND=rw-planner`
      - stop
-12) Archive recommendation only (lite):
-   - if completed rows > 20 or progress too large:
-      - print `ARCHIVE_RESULT=SKIPPED`
-   - no required script in lite mode
+12) Optional user acceptance checklist (advisory, non-blocking):
+   - trigger when all tasks are completed and `REVIEW_STATUS=OK`
+   - if `.ai/runtime/rw-active-plan-id.txt` resolves to `PLAN_ID`, create/update:
+     - `.ai/plans/<PLAN_ID>/user-acceptance-checklist.md`
+   - checklist content should be concise and practical:
+     - `How to run` commands (prefer task `Verification` commands)
+     - expected user-visible results
+     - quick failure hints
+   - this artifact is advisory only:
+     - never change task status based on this file
+     - never block `NEXT_COMMAND`
+     - never emit failure token if file generation is skipped or fails
+13) Archive recommendation only (lite):
+    - if completed rows > 20 or progress too large:
+       - print `ARCHIVE_RESULT=SKIPPED`
+    - no required script in lite mode
 
 Success output:
 - Emit success output order exactly once on controlled success stop.

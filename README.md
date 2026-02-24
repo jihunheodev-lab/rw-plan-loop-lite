@@ -115,6 +115,16 @@ pending -> in-progress -> completed
 
 `rw-planner`에는 handoff(`Start Implementation`)가 설정되어 있어, UI에서 바로 `rw-loop`로 넘길 수 있습니다.
 
+### 사용자 직접 테스트 (권장)
+
+`rw-loop`는 모든 task 완료 + review 통과 시, 사용자 수동 점검용 체크리스트를 만들 수 있습니다.
+
+- 경로: `.ai/plans/<PLAN_ID>/user-acceptance-checklist.md`
+- 포함 내용: 실행 명령, 기대 결과, 실패 시 빠른 확인 포인트
+- 성격: advisory only (참고용)
+  - task 상태/게이트/NEXT_COMMAND에는 영향 없음
+  - 파일 생성 실패/누락으로 실행이 실패하지 않음
+
 ### Planner 질문 정책 (Hybrid)
 
 `rw-planner`는 필수 필드를 항상 채우되, 질문은 누락/모호한 항목에만 수행합니다.

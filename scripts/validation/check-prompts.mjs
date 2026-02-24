@@ -126,6 +126,8 @@ async function main() {
     requireToken(errors, "rw-loop.agent.md", loop, ".github/prompts/subagents/rw-loop-security-review.subagent.md");
     requireToken(errors, "rw-loop.agent.md", loop, "PAUSE_DETECTED");
     requireToken(errors, "rw-loop.agent.md", loop, ".ai/memory/shared-memory.md");
+    requireToken(errors, "rw-loop.agent.md", loop, "user-acceptance-checklist.md");
+    requireToken(errors, "rw-loop.agent.md", loop, "advisory only");
   }
 
   if (healthCheck) {
