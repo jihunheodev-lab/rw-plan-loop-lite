@@ -5,6 +5,11 @@ import path from "node:path";
 
 const REQUIRED_AI_DIRS = ["features", "tasks", "plans", "runtime", "memory", "notes"];
 const REQUIRED_PLAN_FILES = ["plan-summary.yaml", "task-graph.yaml"];
+const REQUIRED_AI_FILES = {
+  context: "CONTEXT.md",
+  progress: "PROGRESS.md",
+  sharedMemory: path.join("memory", "shared-memory.md"),
+};
 
 function toPosix(p) {
   return p.split(path.sep).join("/");
@@ -185,12 +190,58 @@ function rel(root, targetPath) {
   return toPosix(path.relative(root, targetPath));
 }
 
+function buildContextMd() {
+  return [
+    "# Context",
+    "",
+    "Language policy reference for planner/loop runtime.",
+    "",
+    "- Primary Language: Korean",
+    "- Machine tokens must remain in English.",
+    "",
+  ].join("\n");
+}
+
+function buildProgressMd() {
+  return [
+    "# Progress",
+    "",
+    "## Task Status",
+    "",
+    "| Task | Title | Status | Commit |",
+    "|------|-------|--------|--------|",
+    "",
+    "## Phase Status",
+    "",
+    "Current Phase: Phase 1",
+    "- Phase 1: in-progress",
+    "",
+    "## Log",
+    "",
+  ].join("\n");
+}
+
+function buildSharedMemoryMd() {
+  return [
+    "# Shared Memory",
+    "",
+    "## [Bootstrap]",
+    "- Fact: Shared memory file was auto-created by ai-health-check.",
+    "- Reason: Planner/loop memory contract requires this path.",
+    "- Evidence: scripts/health/ai-health-check.mjs --mode fix",
+    `- Updated: ${new Date().toISOString().slice(0, 10)}`,
+    "",
+  ].join("\n");
+}
+
 async function collectHealth(root) {
   const aiRoot = path.join(root, ".ai");
   const issues = [];
 
-  const progressPath = path.join(aiRoot, "PROGRESS.md");
+  const contextPath = path.join(aiRoot, REQUIRED_AI_FILES.context);
+  const progressPath = path.join(aiRoot, REQUIRED_AI_FILES.progress);
   const planPath = path.join(aiRoot, "PLAN.md");
+  const sharedMemoryPath = path.join(aiRoot, REQUIRED_AI_FILES.sharedMemory);
   const activePlanPath = path.join(aiRoot, "runtime", "rw-active-plan-id.txt");
 
   if (!(await exists(aiRoot))) {
@@ -203,7 +254,10 @@ async function collectHealth(root) {
       featureKey: "",
       taskIds: [],
       strategy: "SINGLE",
+      contextPath,
+      progressPath,
       planPath,
+      sharedMemoryPath,
       activePlanPath,
     };
   }
@@ -213,6 +267,16 @@ async function collectHealth(root) {
     if (!(await exists(p))) {
       issues.push(`DIR_MISSING_${dirName.toUpperCase()}`);
     }
+  }
+
+  if (await isMissingOrEmpty(contextPath)) {
+    issues.push("CONTEXT_MISSING");
+  }
+  if (await isMissingOrEmpty(progressPath)) {
+    issues.push("PROGRESS_MISSING");
+  }
+  if (await isMissingOrEmpty(sharedMemoryPath)) {
+    issues.push("SHARED_MEMORY_MISSING");
   }
 
   const progressBody = await readTextIfExists(progressPath);
@@ -281,7 +345,10 @@ async function collectHealth(root) {
     featureKey: latestFeature ? latestFeature.key : planMeta.feature || "FEATURE-RECOVERY",
     taskIds,
     strategy: planMeta.strategy || "SINGLE",
+    contextPath,
+    progressPath,
     planPath,
+    sharedMemoryPath,
     activePlanPath,
   };
 }
@@ -368,6 +435,19 @@ async function runFix(root, inspection) {
       await fs.mkdir(p, { recursive: true });
       applied += 1;
     }
+  }
+
+  if (await isMissingOrEmpty(inspection.contextPath)) {
+    await writeText(inspection.contextPath, buildContextMd());
+    applied += 1;
+  }
+  if (await isMissingOrEmpty(inspection.progressPath)) {
+    await writeText(inspection.progressPath, buildProgressMd());
+    applied += 1;
+  }
+  if (await isMissingOrEmpty(inspection.sharedMemoryPath)) {
+    await writeText(inspection.sharedMemoryPath, buildSharedMemoryMd());
+    applied += 1;
   }
 
   const planId = inspection.planId || utcPlanId();
