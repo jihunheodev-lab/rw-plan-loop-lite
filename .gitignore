@@ -2,6 +2,22 @@ node_modules/
 .DS_Store
 Thumbs.db
 
+# Python cache
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+
+# Runtime-generated AI state (created by health check / smoke test)
+.ai/CONTEXT.md
+.ai/PLAN.md
+.ai/memory/
+.ai/notes/
+.ai/plans/
+.ai/features/
+.ai/tasks/
+.ai/progress-archive/
+
 .ai/runtime/*.flag
 .ai/runtime/*.txt
 .ai/runtime/*.env

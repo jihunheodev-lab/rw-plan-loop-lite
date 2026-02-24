@@ -1,7 +1,0 @@
-focus_area: recovery
-summary: >
-  Auto-generated placeholder to restore required planner artifacts.
-citations:
-  - .ai/PROGRESS.md:1
-assumptions:
-  - "Task execution may already be complete; this file restores artifact integrity only."
