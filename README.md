@@ -25,7 +25,7 @@ workspace/
 │     ├─ rw-loop-security-review.subagent.md
 │     ├─ rw-loop-phase-inspector.subagent.md
 │     └─ rw-loop-review.subagent.md
-├─ .ai/                         # planner 첫 실행 시 자동 bootstrap 가능
+├─ .ai/                         # planner 첫 실행 시 자동 bootstrap
 │  ├─ CONTEXT.md               # Step 0 필수 참조
 │  ├─ PLAN.md
 │  ├─ PROGRESS.md
@@ -34,12 +34,9 @@ workspace/
 │  ├─ plans/
 │  ├─ runtime/
 │  └─ memory/shared-memory.md
-└─ scripts/ (선택)
-   ├─ health/ai-health-check.mjs
-   ├─ validation/check-prompts.mjs
-   ├─ rw-smoke-test.sh
-   ├─ rw-smoke-test.ps1
-   └─ archive/archive-progress.mjs
+└─ docs/
+   ├─ feature-template.md       # Feature 파일 양식
+   └─ memory-contract.md        # 메모리 계약 양식
 ```
 
 ## 동작 흐름 (시각화)
@@ -264,39 +261,14 @@ planner는 feature 파일명을 아래 순서로 선택합니다.
 
 ## 어떤 파일이 "필수"인가?
 
-필수(실행 엔진):
+실행 엔진(필수):
 - `.github/agents/rw-planner.agent.md`
 - `.github/agents/rw-loop.agent.md`
 - `.github/prompts/subagents/rw-loop-*.subagent.md`
-- `.github/prompts/subagents/rw-loop-security-review.subagent.md`
 
-선택(운영 편의):
-- `scripts/validation/check-prompts.mjs`
-- `scripts/health/ai-health-check.mjs`
-- `scripts/rw-smoke-test.sh`
-- `scripts/rw-smoke-test.ps1`
-- `scripts/archive/archive-progress.mjs`
-- `docs/memory-contract.md`
-- `docs/feature-template.md`
-
-즉, 에이전트 파일만으로도 "동작"은 가능하지만,
-검증/회귀 테스트/운영 자동화를 위해 scripts를 함께 두는 구성이 실무에서 더 안전합니다.
-
-## 빠른 검증 명령
-
-```bash
-node scripts/health/ai-health-check.mjs --mode check
-node scripts/validation/check-prompts.mjs
-bash scripts/rw-smoke-test.sh
-```
-
-Windows PowerShell:
-
-```powershell
-node scripts/health/ai-health-check.mjs --mode check
-node scripts/validation/check-prompts.mjs
-powershell -ExecutionPolicy Bypass -File scripts/rw-smoke-test.ps1
-```
+참조 문서:
+- `docs/feature-template.md` — Feature 파일 양식
+- `docs/memory-contract.md` — 메모리 계약 양식
 
 ## 메모리 계약
 
